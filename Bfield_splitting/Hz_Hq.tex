@@ -1,0 +1,96 @@
+\documentclass[border=5mm]{standalone}
+\usepackage{pgfplotstable}
+\usetikzlibrary{calc}
+
+
+%%% Start of the code for energy level
+%%% Example data file
+\pgfplotstableread[ trim cells, col sep=semicolon]{
+one ; two ; three  ;    oneL; twoL ;threeL
+-0.0 ;  0.0 ; 0.00  ;     E ;     ;  
+-100.;  100.00;  0.00  ; $m_I$=1 ; $m_I$=-1;   $m_I$=0 
+-75 ;  125. ;   -25.0 ;     ;   ; 
+}\datatable
+
+\begin{document}
+\centering
+\begin{tikzpicture}[remember picture,x=2.5cm, y=0.25mm]
+
+\begin{axis}[
+%only marks,
+every axis plot post/.style={mark=-,ultra thick,mark size=5mm}, 
+ylabel=Energy , 
+xtick=\empty, 
+ytick=\empty,
+%y axis= very thick,
+%legend pos=outer north east,
+xmin=-0.5,
+xmax=3,
+ymin=-155,
+ymax=155,
+axis lines=left,  
+xtick=\empty,
+hide x axis,
+%hide y axis,
+%legend entries={\small one, \small two,\small three},
+%legend style={draw=none},
+%title=Insert better title here,
+% Extra options added
+anchor=origin,
+disabledatascaling,
+unbounded coords=jump,
+only marks,
+x=2.5cm, y=0.25mm
+] 
+\pgfplotstablegetcolsof{\datatable}
+\pgfmathsetmacro\numberofycols{int(\pgfplotsretval/2)-1}
+\pgfplotsinvokeforeach {0,...,\numberofycols}{  
+ \pgfmathtruncatemacro\METAIND{#1+3}  
+\addplot +[color=black,
+  nodes near coords,
+  node near coords style={
+     anchor=south,
+     %anchor={int((#1==1)&&(\coordindex==1||\coordindex==1)?270:90)},
+     inner sep=1mm,
+     },
+    point meta=explicit symbolic, 
+  ] table[ x expr=\coordindex, y index=#1, meta index=\METAIND ] {\datatable};
+
+
+
+% \addplot [
+%   draw=none,
+%   no markers,
+%   forget plot,
+%   point meta=explicit symbolic,
+%   nodes near coords,
+%   ] table[x expr=\coordindex, y index=#4, meta index=\METAIND] {\datatable};  
+}
+\draw[stealth-stealth,color=black] (axis cs:2,-25) -- (axis cs:2,125) node[right,midway]{$\omega_0 +\omega_Q$};
+\draw[stealth-stealth,color=black] (axis cs:2,-25) -- (axis cs:2,-75) node[right,midway]{$\omega_0 -\omega_Q$};
+\node at (axis cs:0,-140)  {$B_0 = 0 $};
+\node at (axis cs:01.5,-145)  {$B_0 \neq  0 $};
+\node at (axis cs:1,140)  {\textcolor{red}{\textbf{$H_Z$}}};
+\node at (axis cs:2,145)  {\textcolor{red}{\textbf{$H_Z+H_Q $}}};
+\end{axis}
+
+
+
+% Extra code added
+\foreach \case in {one,two,three} {
+    \xdef\previndex{0}
+    \xdef\prevlevel{0}
+        \pgfplotstableforeachcolumnelement{\case}\of\datatable\as\level{%
+        \pgfmathfloatparsenumber{\level}
+        \pgfmathfloatgetflagstomacro\pgfmathresult\flags
+        \ifnum\flags=3\relax\else
+        \draw[densely dotted,thick] ($(\previndex,\prevlevel)+(0.2,0)$) -- ($(\pgfplotstablerow,\level)+(-0.2,0)$);
+
+        \xdef\previndex{\pgfplotstablerow}
+        \xdef\prevlevel{\level}
+        \fi
+    }
+}
+
+\end{tikzpicture}
+\end{document}
